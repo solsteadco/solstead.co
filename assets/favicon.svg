@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<title>Sol Stead</title>
+<defs>
+<clipPath id="ssm-c"><circle cx="100" cy="100" r="86"/></clipPath>
+<clipPath id="ssm-s"><path d="M54 114 A46 46 0 0 1 146 114 Z"/></clipPath>
+</defs>
+<g clip-path="url(#ssm-c)">
+<g clip-path="url(#ssm-s)" fill="#1A1A1A"><rect y="60" width="200" height="33"/><rect y="96" width="200" height="5"/><rect y="105" width="200" height="4"/></g>
+<line x1="0" y1="116" x2="200" y2="116" stroke="#1A1A1A" stroke-width="5"/>
+<path d="M0 133 Q12.5 128 25 133 T50 133 T75 133 T100 133 T125 133 T150 133 T175 133 T200 133" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+<path d="M0 147 Q12.5 142 25 147 T50 147 T75 147 T100 147 T125 147 T150 147 T175 147 T200 147" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+<path d="M0 168 C55 152 135 182 200 159" fill="none" stroke="#1A1A1A" stroke-width="3"/>
+</g>
+<circle cx="100" cy="100" r="93" fill="none" stroke="#1A1A1A" stroke-width="5"/>
+</svg>
