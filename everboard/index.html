@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ReCB EVERBOARD Configurator (prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1f3a68;--ink:#16191e;--mute:#5c6470;--line:#e2e4e7;--soft:#f3f4f5}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Barlow,system-ui,sans-serif;color:var(--ink);background:#fff;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 440px;height:100vh}
+
+/* Stage */
+.stage{position:relative;overflow:hidden;background:radial-gradient(120% 90% at 50% 35%,#fbfbfa 0%,#eceeef 70%,#e3e5e6 100%)}
+.art{position:absolute;top:84px;left:28px;right:28px;bottom:120px;transition:opacity .28s ease}
+.art svg{width:100%;height:100%;display:block}
+.hud{position:absolute;top:26px;left:32px;right:32px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.hud h2{font-family:"Barlow Condensed";font-weight:600;font-size:30px;letter-spacing:.02em;text-transform:uppercase}
+.hud p{color:var(--mute);font-size:15px;margin-top:2px}
+.trucknav{display:none;align-items:center;gap:8px;font-size:14px;color:var(--mute)}
+.trucknav button{width:30px;height:30px;border-radius:50%;border:1px solid #cfd3d8;background:#fff}
+.trucknav button:disabled{opacity:.35;cursor:default}
+.tabs{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);display:flex;background:rgba(255,255,255,.85);backdrop-filter:blur(6px);border-radius:999px;padding:4px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.tabs button{border:0;background:none;padding:8px 18px;border-radius:999px;font-weight:500;font-size:14px;color:var(--mute)}
+.tabs button[aria-pressed=true]{background:var(--ink);color:#fff}
+.note{position:absolute;left:32px;bottom:40px;font-size:12px;color:#8a919b;max-width:260px}
+
+/* Panel */
+.panel{overflow-y:auto;border-left:1px solid var(--line);display:flex;flex-direction:column;scroll-behavior:smooth}
+.sec{padding:34px 36px 10px}
+.hero{padding-top:48px;text-align:center}
+.hero .logo{display:inline-flex;align-items:center;gap:10px}
+.mark{border:2.5px solid var(--ink);font-family:"Barlow Condensed";font-weight:700;font-size:17px;line-height:.82;padding:4px 4px 3px;text-align:left}
+.hero h1{font-family:"Barlow Condensed";font-weight:500;font-size:44px;letter-spacing:.03em}
+.hero .tag{color:var(--mute);font-size:15px;margin-top:2px}
+.fm{display:inline-flex;align-items:center;gap:10px;margin-top:22px;border:1.5px solid var(--navy);border-radius:999px;padding:6px 16px 6px 8px}
+.fm b{white-space:nowrap;background:var(--navy);color:#fff;font-family:"Barlow Condensed";font-weight:600;font-size:18px;letter-spacing:.03em;padding:3px 12px;border-radius:999px}
+.fm span{font-size:13px;color:var(--mute)}
+.certs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}
+.cert{display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:12px 10px;text-align:center}
+.cert b{display:block;font-family:"Barlow Condensed";font-weight:600;font-size:19px;white-space:nowrap}
+.cert span{font-size:12px;color:var(--mute)}
+.cert .mslot{margin:0}
+.cert .mslot.has{width:62px;height:46px}
+.specs{display:grid;grid-template-columns:repeat(3,1fr);align-items:start;margin:18px 0 6px;gap:6px}
+.specs div{display:flex;flex-direction:column;align-items:center;gap:2px}
+.mslot{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border:1.5px dashed #b9bec6;border-radius:6px;font-size:9px;line-height:1.1;color:#8a919b;text-transform:uppercase;letter-spacing:.04em;text-align:center;flex:none;margin-bottom:4px}
+.mslot img{max-width:100%;max-height:100%}
+.mslot.has{border:0}
+.specs .mslot.has{width:84px;height:56px}
+.fm .mslot{width:36px;height:36px;margin:0}
+.fm .mslot.has{width:52px;height:40px;margin-left:4px}
+.specs b{font-family:"Barlow Condensed";font-weight:600;font-size:21px}
+.specs span{font-size:12px;color:var(--mute)}
+h3{font-family:"Barlow Condensed";font-weight:600;font-size:22px;text-align:center;margin-bottom:16px}
+.lbl{font-size:13px;color:var(--mute);margin:20px 0 8px;font-weight:500}
+.opts{display:grid;gap:10px}
+.opt{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:#fff;border:1px solid #d7dade;border-radius:6px;padding:14px 16px;transition:border-color .15s,box-shadow .15s}
+.opt:hover{border-color:#a9afb7}
+.opt[aria-pressed=true]{border-color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.opt:disabled{opacity:.4;cursor:not-allowed}
+.opt .t{font-weight:600;font-size:16px}
+.opt .s{font-size:13px;color:var(--mute)}
+.opt .r{margin-left:auto;font-size:13px;color:var(--mute);text-align:right;white-space:nowrap}
+.sw{width:40px;height:40px;border-radius:50%;flex:none;border:1px solid rgba(0,0,0,.15)}
+.sw{position:relative;overflow:hidden}.sw i.sw{position:absolute;left:50%;top:-1px;width:50%;height:42px;border:0;border-radius:0}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 3px}.tags .soon{margin-left:0}
+.pre{display:inline-flex;align-items:center;background:#e6f2ea;color:#1d6b3a;border:1px solid #b9dcc5;font-size:11px;font-weight:600;letter-spacing:.02em;padding:1px 8px;border-radius:999px}
+.soon{display:inline-flex;align-items:center;gap:4px;vertical-align:2px;margin-left:6px;background:#fff4d6;color:#7a5200;border:1px solid #f0d58a;font-size:11px;font-weight:600;letter-spacing:.02em;padding:1px 7px 1px 5px;border-radius:999px}
+.rec{display:inline-block;background:#e6f2ea;color:#1d6b3a;font-size:11px;font-weight:600;padding:1px 6px;border-radius:3px;margin-left:4px}
+.zipres{margin-top:12px;border-radius:8px;padding:14px 16px;font-size:14px;line-height:1.45;display:none}
+.zipres.on{display:block}
+.zipres.hot{background:#fff8e1;border:1px solid #f1d98b;border-left:4px solid #e0a800}
+.zipres .act2{margin:10px 0 0 8px;height:36px;padding:0 14px;border-radius:6px;border:1px solid #d7c27a;background:#fff;font-weight:600;font-size:13px}
+.zipres .lnk{border:0;background:none;color:var(--navy);text-decoration:underline;font-size:13px;padding:0;margin-left:4px}
+.zipres.cool{background:var(--soft);border:1px solid var(--line)}
+.zipres b{font-weight:600}
+.zipres .act{margin-top:10px;height:36px;padding:0 14px;border-radius:6px;border:0;background:var(--navy);color:#fff;font-weight:600;font-size:13px}
+.zipres .fine{font-size:11.5px;color:#8a919b;margin-top:8px}
+.cla{display:inline-block;background:#7a2e0e;color:#fff;font-size:11px;font-weight:600;letter-spacing:.03em;padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:2px}
+.vsh{display:inline-block;background:#1f3a68;color:#fff;font-size:11px;font-weight:600;letter-spacing:.03em;padding:1px 6px;border-radius:3px}
+.opt[aria-pressed=true] .vsh{background:#1f3a68}
+.sw.paper{background:repeating-linear-gradient(8deg,#c9a676 0 5px,#bd9866 5px 6px)}
+.sw.glass{background:#ecebe4;background-image:repeating-linear-gradient(45deg,#d3d1c6 0 1px,transparent 1px 5px),repeating-linear-gradient(-45deg,#d3d1c6 0 1px,transparent 1px 5px)}
+.row{display:grid;grid-template-columns:repeat(var(--n,2),1fr);gap:10px}
+.row .opt{justify-content:center;flex-direction:column;gap:2px;text-align:center;padding:12px 8px}
+.seg{display:flex;background:var(--soft);border-radius:6px;padding:3px}
+.seg button{flex:1;border:0;background:none;padding:8px 4px;border-radius:4px;font-size:14px;color:var(--mute)}
+.seg button[aria-pressed=true]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12);font-weight:600}
+.qty{display:flex;align-items:center;gap:10px;margin-top:12px}
+.qty button{width:44px;height:44px;border-radius:6px;border:1px solid #d7dade;background:#fff;font-size:22px}
+.qty input{flex:1;height:44px;border:1px solid #d7dade;border-radius:6px;text-align:center;font:600 20px Barlow;min-width:0}
+.derived{font-size:14px;color:var(--mute);margin-top:10px;text-align:center;line-height:1.5}
+.derived b{color:var(--ink);font-weight:600}
+.tiny{font-size:12px;color:#8a919b;margin-top:8px;text-align:center}
+.zip{margin-top:10px;width:100%;height:44px;border:1px solid #d7dade;border-radius:6px;padding:0 14px;font:16px Barlow}
+.spacer{height:28px}
+
+.foot{position:sticky;bottom:0;margin-top:auto;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-top:1px solid var(--line);padding:16px 36px 20px}
+.foot .sku{font-size:13px;color:var(--mute)}
+.foot .tot{display:flex;justify-content:space-between;align-items:baseline;margin:4px 0 12px;gap:10px}
+.foot .tot b{font-family:"Barlow Condensed";font-weight:600;font-size:24px;white-space:nowrap}
+.foot .tot span{font-size:13px;color:var(--mute);text-align:right}
+.cta{width:100%;height:46px;border:0;border-radius:6px;background:var(--navy);color:#fff;font-weight:600;font-size:15px;letter-spacing:.02em}
+.cta:hover{background:#18305a}
+
+/* Modal */
+.modal{position:fixed;inset:0;background:rgba(15,18,22,.45);display:none;align-items:center;justify-content:center;z-index:20;padding:20px}
+.modal.on{display:flex}
+.card{background:#fff;border-radius:10px;max-width:460px;width:100%;padding:28px;max-height:90vh;overflow:auto}
+.card h4{font-family:"Barlow Condensed";font-size:26px;font-weight:600}
+.card p{color:var(--mute);font-size:14px;margin:4px 0 16px}
+.card label{display:block;font-size:13px;color:var(--mute);margin:10px 0 4px}
+.card .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card input{width:100%;height:40px;border:1px solid #d7dade;border-radius:6px;padding:0 12px;font:15px Barlow}
+.card pre{white-space:pre-wrap;background:var(--soft);border-radius:6px;padding:14px;font:13px/1.5 ui-monospace,Menlo,monospace;margin:12px 0}
+.card .btns{display:flex;gap:10px;margin-top:18px}
+.card .btns button{flex:1;height:42px;border-radius:6px;border:1px solid #d7dade;background:#fff;font-weight:600}
+.card .btns .cta{border:0;background:var(--navy);color:#fff}
+
+@media (max-width:900px){
+  .app{display:block;height:auto}
+  .stage{position:sticky;top:0;height:48vh;z-index:5;border-bottom:1px solid var(--line)}
+  .art{top:64px;bottom:70px;left:12px;right:12px}
+  .hud{top:14px;left:16px;right:16px}.hud h2{font-size:22px}.hud p{font-size:13px}
+  .art{bottom:62px}.note{display:none}.tabs{bottom:12px}
+  .panel{overflow:visible;border:0}
+  .sec{padding:26px 20px 6px}.foot{padding:14px 20px 18px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="stage" aria-label="Product preview">
+    <div class="hud">
+      <div><h2 id="sceneTitle">Board</h2><p id="sceneStats"></p></div>
+      <div class="trucknav" id="truckNav">
+        <button id="tPrev" aria-label="Previous truck">‹</button>
+        <span id="tLbl">Truck 1 of 1</span>
+        <button id="tNext" aria-label="Next truck">›</button>
+      </div>
+    </div>
+    <div class="art" id="art"></div>
+    <div class="tabs" role="tablist">
+      <button data-go="board" aria-pressed="true">Board</button>
+      <button data-go="bundle" aria-pressed="false">Pallet</button>
+      <button data-go="truck" aria-pressed="false">Truckload</button>
+    </div>
+    <div class="note" id="stageNote"></div>
+  </section>
+
+  <aside class="panel" id="panel">
+    <div class="sec hero" data-scene="board">
+      <div class="logo"><div class="mark">Re<br>CB</div><h1>EVERBOARD</h1></div>
+      <div class="tag">ReCB EVERBOARD · High-Performance Roof Board · Made in Lodi, CA</div>
+      <div class="certs">
+        <div class="cert"><span class="mslot" data-mark="fm">FM<br>mark</span><div><b>FM Approved</b><span>Paper-backed boards</span></div></div>
+        <div class="cert"><span class="mslot" data-mark="ul">UL<br>mark</span><div><b>UL Approved</b><span>Paper-backed boards</span></div></div>
+      </div>
+      <div class="tiny" style="margin-top:8px">UL R41497 · Roofing Systems · UL 790 &amp; CAN/ULC-S107 (fire) · UL 2218A (impact resistance)</div>
+      <div class="specs">
+        <div><b>VSH</b><span>Very Severe Hail<br>1/2″ boards</span></div>
+        <div><b>Class A</b><span>Fire rating<br>Fiberglass-faced boards</span></div>
+        <div><b>0 VOCs</b><span>No volatile organic compounds</span></div>
+      </div>
+    </div>
+
+    <div class="sec" data-scene="board" id="secZip">
+      <h3>Where's the job?</h3>
+      <input class="zip" id="zip" placeholder="Jobsite ZIP code" inputmode="numeric" maxlength="5" aria-label="Jobsite ZIP code" style="margin-top:0">
+      <div class="zipres" id="zipRes" aria-live="polite"></div>
+    </div>
+
+    <div class="sec" data-scene="board" id="secBoard">
+      <h3>Build your roofcover board</h3>
+      <div class="lbl">Facer</div>
+      <div class="opts" id="optFacer"></div>
+      <div class="lbl">Thickness</div>
+      <div class="row" id="optThk"></div>
+      <div class="lbl">Board size</div>
+      <div class="row" style="--n:4" id="optLen"></div>
+    </div>
+
+    <div class="sec" data-scene="bundle" id="secBundle">
+      <h3>Pallet</h3>
+      <div class="opts" id="optBundle"></div>
+      <div class="tiny">Pallet count is set by thickness: 52 pieces for 1/4″, 30 pieces for 1/2″. Pallets ship banded on wood dunnage with a ReCB EVERBOARD label on the long side.</div>
+    </div>
+
+    <div class="sec" data-scene="truck" id="secQty">
+      <h3>Quantity &amp; delivery</h3>
+      <div class="seg" id="optUnit"></div>
+      <div class="qty">
+        <button id="qMinus" aria-label="Decrease">−</button>
+        <input id="qIn" inputmode="numeric" value="4" aria-label="Quantity">
+        <button id="qPlus" aria-label="Increase">+</button>
+      </div>
+      <div class="derived" id="derived"></div>
+      <div class="tiny">Orders round up to full pallets.</div>
+      <div class="lbl">Delivery</div>
+      <div class="opts" id="optShip"></div>
+      <div class="spacer"></div>
+    </div>
+
+    <div class="foot">
+      <div class="sku" id="fSku"></div>
+      <div class="tot"><b id="fMain"></b><span id="fSub"></span></div>
+      <button class="cta" id="cta">Request quote</button>
+    </div>
+  </aside>
+</div>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <form class="card" id="mForm">
+    <h4 id="mTitle">Request a quote</h4>
+    <p id="mIntro">We'll confirm pricing, freight and lead time for this configuration.</p>
+    <div id="mFields">
+      <div class="two">
+        <div><label for="fFirst">First name</label><input id="fFirst" autocomplete="given-name" required></div>
+        <div><label for="fLast">Last name</label><input id="fLast" autocomplete="family-name" required></div>
+      </div>
+      <label for="fPhone">Phone</label><input id="fPhone" type="tel" autocomplete="tel" required>
+      <label for="fEmail">Email</label><input id="fEmail" type="email" autocomplete="email" required>
+    </div>
+    <pre id="mSummary"></pre>
+    <div class="btns" id="mBtns">
+      <button type="button" id="mClose">Cancel</button>
+      <button type="submit" class="cta" id="mSubmit">Review request</button>
+    </div>
+  </form>
+</div>
+
+<script>
+/* ================================================================
+   PRODUCT DATA — edit here. Everything on the page is driven by this.
+   Values marked (CONFIRM) are placeholders to verify with production.
+   ================================================================ */
+const CFG = {
+  brand: 'ReCB EVERBOARD',
+  // Bundle count is set by thickness: 1/4″ = 52 pcs, 1/2″ = 30 pcs.
+  // (CONFIRM) SKU codes: Q = 1/4″, H = 1/2″, "+" = has a fiberglass facer.
+  skus: [
+    { code: 'QB',  facer: 'pp', thk: 0.25, pcs: 52 },
+    { code: 'HB',  facer: 'pp', thk: 0.5,  pcs: 30 },
+    { code: 'HB+', facer: 'pf', thk: 0.5,  pcs: 30 },
+    { code: 'QB+', facer: 'ff', thk: 0.25, pcs: 52 },
+  ],
+  facers: {
+    pf: { fm: true, classA: true, name: 'Fiberglass / Paper', sub: 'Fiberglass top, paper bottom · 1/2″ only', top: 'url(#glass)', bot: 'url(#paper)', sw: 'glass', sw2: 'paper' },
+    pp: { fm: true, name: 'Paper / Paper',           sub: 'Paper facer both sides · 1/4″ or 1/2″',  top: 'url(#paper)', bot: 'url(#paper)', sw: 'paper', sw2: 'paper' },
+    ff: { classA: true, soon: true, ulPending: true, name: 'Fiberglass / Fiberglass', sub: 'Fiberglass facer both sides · 1/4″ only · UL approval pending', top: 'url(#glass)', bot: 'url(#glass)', sw: 'glass', sw2: 'glass' },
+  },
+  thicknesses: [0.25, 0.5],
+  vsh: { 0.5: true },                          // FM Very Severe Hail approved thicknesses
+  // Paste official mark artwork (licensee files from UL / FM) as data: URIs to replace the placeholders.
+  marks: { ul: 'data:image/png;base64,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', fm: 'data:image/png;base64,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' },
+  ul: { file: 'R41497', scope: 'Roofing Systems', tests: 'UL 790 & CAN/ULC-S107 fire tests · UL 2218A impact resistance' },
+  lengths: [
+    { ft: 4,  name: "4′ × 4′" },
+    { ft: 8,  name: "4′ × 8′" },
+    { ft: 9,  name: "4′ × 9′" },
+    { ft: 10, name: "4′ × 10′" },
+  ],
+  lbPerSf: { 0.25: 1.0, 0.5: 2.0 },            // board weight by thickness
+  dunnageIn: 4, dunnageLb: 80,                 // per pallet (30 × 1/2″ 4×8 ≈ 2,000 lb)
+  truck: { deckIn: 576, widthIn: 102, stackIn: 96, payloadLb: 40000 }, // 48' flatbed, max ship weight
+  pricePerSf: null,                            // set a number (e.g. 1.15) to show an estimate
+  plant: 'ReCB California, LLC · Lodi, CA 95242',
+};
+
+/* ================================================================ */
+const CLOCK = '<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.5V8l2.5 1.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+const st = { facer: 'pf', thk: 0.5, pcs: 30, len: 8, unit: 'bundles', qty: 4, ship: 'deliver', zip: '', scene: 'board', truck: 0 };
+const $ = id => document.getElementById(id);
+const nf = n => Math.round(n).toLocaleString('en-US');
+const frac = t => ({0.25:'1/4″',0.3125:'5/16″',0.375:'3/8″',0.4375:'7/16″',0.5:'1/2″',0.625:'5/8″'}[t] || t + '″');
+const skuFor = (f, t, p) => CFG.skus.find(s => s.facer === f && s.thk === t && (p == null || s.pcs === p));
+
+function calc() {
+  const sku = skuFor(st.facer, st.thk, st.pcs);
+  const sfBoard = 4 * st.len;
+  const lbBoard = sfBoard * CFG.lbPerSf[st.thk];
+  const stackIn = st.pcs * st.thk;
+  const bundleH = stackIn + CFG.dunnageIn;
+  const bundleLb = st.pcs * lbBoard + CFG.dunnageLb;
+  const T = CFG.truck;
+  const across = Math.floor(T.widthIn / 48);
+  const along = Math.floor(T.deckIn / (st.len * 12));
+  const tiers = Math.max(1, Math.floor(T.stackIn / bundleH));
+  const spaceCap = across * along * tiers;
+  const weightCap = Math.max(1, Math.floor(T.payloadLb / bundleLb));
+  const perTruck = Math.min(spaceCap, weightCap);
+  let bundles;
+  const q = Math.max(0, st.qty || 0);
+  if (st.unit === 'bundles') bundles = q;
+  else if (st.unit === 'boards') bundles = Math.ceil(q / st.pcs);
+  else if (st.unit === 'sf') bundles = Math.ceil(q / sfBoard / st.pcs);
+  else bundles = q * perTruck;
+  bundles = Math.max(1, bundles);
+  const boards = bundles * st.pcs;
+  return { sku, sfBoard, lbBoard, stackIn, bundleH, bundleLb, across, along, tiers, spaceCap, weightCap, perTruck,
+    bundles, boards, sf: boards * sfBoard, lb: bundles * bundleLb, trucks: Math.ceil(bundles / perTruck),
+    limit: weightCap < spaceCap ? 'weight' : 'space' };
+}
+
+/* ---------------- isometric drawing ---------------- */
+const C30 = 0.8660254, S30 = 0.5;
+const EDGE = 'stroke="rgba(20,24,30,.55)" stroke-width="1" vector-effect="non-scaling-stroke" stroke-linejoin="round"';
+function scene() {
+  const s = { o: [], b: [1e9, 1e9, -1e9, -1e9] };
+  s.P = (x, y, z) => { const X = (x - y) * C30, Y = (x + y) * S30 - z;
+    s.b[0] = Math.min(s.b[0], X); s.b[1] = Math.min(s.b[1], Y); s.b[2] = Math.max(s.b[2], X); s.b[3] = Math.max(s.b[3], Y); return [X, Y]; };
+  s.pts = arr => arr.map(q => s.P(...q).map(n => n.toFixed(2)).join(',')).join(' ');
+  s.poly = (arr, a) => s.o.push(`<polygon points="${s.pts(arr)}" ${a}/>`);
+  s.line = (a, b, at) => { const [x1, y1] = s.P(...a), [x2, y2] = s.P(...b);
+    s.o.push(`<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" ${at}/>`); };
+  s.raw = t => s.o.push(t);
+  s.face = (arr, fill, shade) => { s.poly(arr, `fill="${fill}"`); s.poly(arr, `fill="#000" fill-opacity="${shade}" ${EDGE}`); };
+  s.box = (x, y, z, w, d, h, f) => {
+    s.face([[x, y + d, z], [x + w, y + d, z], [x + w, y + d, z + h], [x, y + d, z + h]], f.b || f.a, f.sb ?? .10);
+    s.face([[x + w, y, z], [x + w, y + d, z], [x + w, y + d, z + h], [x + w, y, z + h]], f.a, f.sa ?? .24);
+    s.face([[x, y, z + h], [x + w, y, z + h], [x + w, y + d, z + h], [x, y + d, z + h]], f.top, f.st ?? 0);
+  };
+  s.disc = (xc, y, zc, r, fill) => { const a = []; for (let i = 0; i < 20; i++) { const t = i / 20 * Math.PI * 2; a.push([xc + r * Math.cos(t), y, zc + r * Math.sin(t)]); } s.poly(a, `fill="${fill}" ${EDGE}`); };
+  s.svg = (pad, k) => { const [a, b, c, d] = s.b;
+    return `<svg viewBox="${(a - pad).toFixed(1)} ${(b - pad).toFixed(1)} ${(c - a + 2 * pad).toFixed(1)} ${(d - b + 2 * pad).toFixed(1)}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">${defs(k)}${s.o.join('')}</svg>`; };
+  return s;
+}
+function defs(k) {
+  let r = 11, sp = ''; const rnd = () => (r = (r * 16807) % 2147483647) / 2147483647;
+  const cols = ['#a3aa98', '#5a6157', '#c6b38e', '#6e7984', '#93896f'];
+  for (let i = 0; i < 18; i++) sp += `<circle cx="${(rnd() * 6 * k).toFixed(2)}" cy="${(rnd() * 6 * k).toFixed(2)}" r="${(0.22 * k + rnd() * 0.3 * k).toFixed(2)}" fill="${cols[i % 5]}"/>`;
+  return `<defs>
+  <pattern id="seal" width="${4 * k}" height="${4 * k}" patternUnits="userSpaceOnUse"><rect width="${4 * k}" height="${4 * k}" fill="#2c63b5"/><path d="M0 ${1.2 * k}L${4 * k} ${1.2 * k}" stroke="#4d82cf" stroke-width="${0.35 * k}" opacity=".55"/></pattern>
+  <pattern id="core" width="${6 * k}" height="${6 * k}" patternUnits="userSpaceOnUse"><rect width="${6 * k}" height="${6 * k}" fill="#7f867b"/>${sp}</pattern>
+  <pattern id="paper" width="${8 * k}" height="${8 * k}" patternUnits="userSpaceOnUse"><rect width="${8 * k}" height="${8 * k}" fill="#c9a676"/><path d="M0 ${2 * k}L${8 * k} ${2.6 * k}M0 ${5.5 * k}L${8 * k} ${5 * k}" stroke="#b48f5d" stroke-width="${0.25 * k}" opacity=".55"/></pattern>
+  <pattern id="glass" width="${3 * k}" height="${3 * k}" patternUnits="userSpaceOnUse"><rect width="${3 * k}" height="${3 * k}" fill="#edece6"/><path d="M0 0L${3 * k} ${3 * k}M${3 * k} 0L0 ${3 * k}" stroke="#d2d0c5" stroke-width="${0.18 * k}"/></pattern>
+  </defs>`;
+}
+const LINE = (c, w = 1) => `stroke="${c}" stroke-width="${w}" vector-effect="non-scaling-stroke"`;
+
+function drawBundle(s, x, y, z, c, label) {
+  const L = st.len * 12, W = 48, D = CFG.dunnageIn, H = c.stackIn, top = z + D + H;
+  const wood = { top: '#c29461', a: '#9a6e3e', b: '#ad7f4c', sa: 0, sb: 0 };
+  [0.07, 0.5, 0.93].forEach(f => s.box(x + f * L - 2, y + 1, z, 4, W - 2, D, wood));
+  s.box(x, y, z + D, L, W, H, { top: CFG.facers[st.facer].top, a: label ? '#4f86d6' : 'url(#seal)', b: label ? '#5b92e0' : 'url(#seal)', st: 0.02 });
+  const step = label ? 1 : Math.max(1, Math.round(st.pcs / 13));
+  for (let i = step; i < st.pcs; i += step) {
+    const zi = z + D + i * st.thk;
+    const seam = label ? LINE('rgba(10,20,45,.85)', 1.2) : LINE('rgba(0,0,0,.3)', .7);
+    s.line([x, y + W, zi], [x + L, y + W, zi], seam);
+    s.line([x + L, y, zi], [x + L, y + W, zi], seam);
+  }
+  [0.22, 0.78].forEach(f => { const sx = x + f * L;
+    s.line([sx, y, top], [sx, y + W, top], LINE('#262a31', 1.6));
+    s.line([sx, y + W, top], [sx, y + W, z + D], LINE('#262a31', 1.6)); });
+  // label on the long face
+  const lw = Math.min(30, L * 0.32), lh = Math.min(H - 2.5, 10);
+  if (lh > 2) {
+    const [ox, oy] = s.P(x + L * 0.5 - lw / 2, y + W, top - (H - lh) / 2);
+    const m = `matrix(${C30},${S30},0,1,${ox.toFixed(2)},${oy.toFixed(2)})`;
+    let inner = `<rect width="${lw}" height="${lh}" fill="#fff" stroke="#1f3a68" stroke-width="${label ? .5 : .8}" vector-effect="non-scaling-stroke"/>`;
+    if (label) {
+      const f = CFG.facers[st.facer].name.toUpperCase().replace(' / ', '-') + ' FACED';
+      inner += `<text x="${lw / 2}" y="${lh * 0.42}" font-family="Barlow Condensed" font-weight="600" font-size="${lh * 0.3}" text-anchor="middle" fill="#16191e">${CFG.brand}</text>
+        <line x1="${lw * .08}" y1="${lh * .55}" x2="${lw * .92}" y2="${lh * .55}" stroke="#1f3a68" stroke-width="1" vector-effect="non-scaling-stroke"/>
+        <text x="${lw / 2}" y="${lh * 0.8}" font-family="Barlow" font-size="${lh * 0.15}" text-anchor="middle" fill="#16191e" textLength="${(lw * .88).toFixed(2)}" lengthAdjust="spacingAndGlyphs">${f} · ${frac(st.thk)} · 4′×${st.len}′ · ${st.pcs} PCS</text>`;
+    }
+    s.raw(`<g transform="${m}">${inner}</g>`);
+  }
+}
+
+function drawBoardScene(c) {
+  const s = scene(), L = st.len * 12, W = 48, T = Math.max(st.thk * 10, 2), off = 10;
+  const fs = ((L + W) * C30) / 34;
+  s.poly([[5, 7, 0], [L + 7, 7, 0], [L + 7, W + 9, 0], [5, W + 9, 0]], 'fill="#000" fill-opacity=".08"');
+  const F = CFG.facers[st.facer], fl = T * 0.14;
+  // blue edge sealant wraps all four edges
+  s.box(0, 0, 0, L, W, T, { top: F.top, a: 'url(#seal)', b: 'url(#seal)', sa: .18, sb: .06, st: 0.01 });
+  // facer callouts
+  { const a = s.P(L * 0.62, W * 0.4, T), b = s.P(L * 0.62 - 20, -26, T + 26);
+    const c1 = s.P(L * 0.25, W, 0), c2 = s.P(L * 0.25 - 4, W + 30, -18);
+    const e1 = s.P(L * 0.8, W, T / 2), e2 = s.P(L * 0.8 + 6, W + 26, -20);
+    const nm = u => u.includes('glass') ? 'Fiberglass' : 'Paper';
+    s.raw(`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" ${LINE('#7a828c')}/><circle cx="${a[0]}" cy="${a[1]}" r="${fs*.12}" fill="#16191e"/>
+      <text x="${b[0]}" y="${b[1] - fs * .3}" font-family="Barlow" font-size="${fs * .55}" text-anchor="middle" fill="#16191e">Top facer · <tspan font-weight="600">${nm(F.top)}</tspan></text>
+      <line x1="${c1[0]}" y1="${c1[1]}" x2="${c2[0]}" y2="${c2[1]}" ${LINE('#7a828c')}/><circle cx="${c1[0]}" cy="${c1[1]}" r="${fs*.12}" fill="#16191e"/>
+      <text x="${c2[0]}" y="${c2[1] + fs * .7}" font-family="Barlow" font-size="${fs * .55}" text-anchor="middle" fill="#16191e">Bottom facer (underside) · <tspan font-weight="600">${nm(F.bot)}</tspan></text>`);
+    s.P(L * 0.62 - 20, -40, T + 40); s.P(L * 0.25 - 4, W + 40, -30); s.P(L * 0.8 + 30, W + 40, -30); }
+  const dim = (a, b, txt, dx, dy) => {
+    s.line(a, b, LINE('#7a828c'));
+    const m = s.P((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2);
+    s.raw(`<text x="${(m[0] + dx).toFixed(1)}" y="${(m[1] + dy).toFixed(1)}" font-family="Barlow Condensed" font-weight="600" font-size="${fs}" text-anchor="middle" fill="#16191e">${txt}</text>`);
+  };
+  dim([0, W + off, 0], [L, W + off, 0], st.len + '′', -fs * .7, fs * 1.5);
+  [[0, W + off - 3, 0, 0, W + off + 3, 0], [L, W + off - 3, 0, L, W + off + 3, 0]].forEach(q => s.line(q.slice(0, 3), q.slice(3), LINE('#7a828c')));
+  dim([L + off, 0, 0], [L + off, W, 0], '4′', fs * .9, fs * 1.3);
+  [[L + off - 3, 0, 0, L + off + 3, 0, 0], [L + off - 3, W, 0, L + off + 3, W, 0]].forEach(q => s.line(q.slice(0, 3), q.slice(3), LINE('#7a828c')));
+  const cpt = s.P(L, W, T / 2);
+  const tp = s.P(L + 26, W - 30, T + 30);
+  s.raw(`<line x1="${cpt[0]}" y1="${cpt[1]}" x2="${tp[0]}" y2="${tp[1] + fs * .3}" ${LINE('#7a828c')}/>
+    <text x="${tp[0] + fs * .3}" y="${tp[1]}" font-family="Barlow Condensed" font-weight="600" font-size="${fs}" fill="#16191e">${frac(st.thk)}</text>
+    <text x="${tp[0] + fs * .3}" y="${tp[1] + fs * .85}" font-family="Barlow" font-size="${fs * .48}" fill="#6b727c">edge shown 10× for clarity</text>`);
+  s.P(L + 26 + fs * 6, W - 30, T + 30);
+  return s.svg(fs * 1.5, 1);
+}
+
+function drawBundleScene(c) {
+  const s = scene(), L = st.len * 12, W = 48, H = c.stackIn + CFG.dunnageIn;
+  const fs = ((L + W) * C30) / 36;
+  s.poly([[4, 6, 0], [L + 6, 6, 0], [L + 6, W + 9, 0], [4, W + 9, 0]], 'fill="#000" fill-opacity=".09"');
+  drawBundle(s, 0, 0, 0, c, true);
+  const a = [-8, W, 0], b = [-8, W, H];
+  s.line(a, b, LINE('#7a828c'));
+  s.line([-11, W, 0], [-5, W, 0], LINE('#7a828c')); s.line([-11, W, H], [-5, W, H], LINE('#7a828c'));
+  const m = s.P(-8, W, H / 2);
+  s.raw(`<text x="${(m[0] - fs * .5).toFixed(1)}" y="${(m[1] + fs * .35).toFixed(1)}" font-family="Barlow Condensed" font-weight="600" font-size="${fs}" text-anchor="end" fill="#16191e">${(H).toFixed(H % 1 ? 1 : 0)}″</text>`);
+  s.P(-8 - fs * 4, W + fs * 3, 0);
+  return s.svg(fs * 1.5, 1.4);
+}
+
+function drawTruckScene(c) {
+  const s = scene(), T = CFG.truck, L = st.len * 12, deckZ = 50;
+  // tractor chassis + drive axles sit UNDER the trailer nose (fifth wheel); draw first so the trailer covers them
+  const x0 = T.deckIn + 10;
+  s.box(T.deckIn - 120, 14, 22, 120 + 260, 74, 14, { top: '#2b2f35', a: '#1f2227', b: '#272a30' });
+  [T.deckIn - 92, T.deckIn - 46].forEach(x => { s.disc(x, T.widthIn - 10, 20, 20, '#1b1d21'); s.disc(x, T.widthIn - 9.8, 20, 9, '#a3a9b1'); });
+  // trailer frame + deck
+  s.box(0, 30, deckZ - 22, T.deckIn, 42, 16, { top: '#2b2f35', a: '#1f2227', b: '#272a30' });
+  s.box(0, 0, deckZ - 7, T.deckIn, T.widthIn, 7, { top: '#55595f', a: '#33363b', b: '#3c4046', sa: 0, sb: 0 });
+  // trailer wheels (near side)
+  [40, 86].forEach(x => { s.disc(x, T.widthIn - 6, 20, 20, '#1b1d21'); s.disc(x, T.widthIn - 5.8, 20, 9, '#a3a9b1'); });
+  // bundles on this truck
+  const onThis = Math.max(0, Math.min(c.perTruck, c.bundles - st.truck * c.perTruck));
+  const gap = (T.deckIn - c.along * L) / (c.along + 1);
+  const ys = c.across === 2 ? [2, 52] : [27];
+  const slots = [];
+  for (let t = 0; t < c.tiers; t++) for (let i = 0; i < c.along; i++) for (const y of ys)
+    slots.push({ x: T.deckIn - (i + 1) * (L + gap), y, z: deckZ + t * c.bundleH, t });
+  // spread lower tier first, front-to-back
+  const used = slots.slice(0, onThis);
+  used.sort((p, q) => (p.x + p.y) - (q.x + q.y) || p.z - q.z);
+  used.forEach(p => drawBundle(s, p.x, p.y, p.z, c, false));
+  // tractor (front at +x, facing viewer)
+  s.box(x0 + 80, 6, 42, 110, 90, 104, { top: '#e9ebee', a: '#c9ced4', b: '#dde0e4' });
+  s.box(x0 + 190, 12, 42, 62, 78, 52, { top: '#e4e7ea', a: '#c3c8ce', b: '#d6dade' });
+  s.disc(x0 + 205, T.widthIn - 10, 22, 22, '#1b1d21'); s.disc(x0 + 205, T.widthIn - 9.8, 22, 10, '#a3a9b1');
+  s.poly([[x0 + 190, 14, 100], [x0 + 190, 88, 100], [x0 + 190, 86, 138], [x0 + 190, 16, 138]], `fill="#2c3b4c" ${EDGE}`);
+  s.poly([[x0 + 140, 96, 100], [x0 + 184, 96, 100], [x0 + 184, 96, 136], [x0 + 148, 96, 136]], `fill="#2c3b4c" ${EDGE}`);
+  s.poly([[x0 + 252, 20, 52], [x0 + 252, 82, 52], [x0 + 252, 82, 84], [x0 + 252, 20, 84]], `fill="#9aa1a9" ${EDGE}`);
+  return s.svg(40, 4);
+}
+
+/* ---------------- UI ---------------- */
+function opt(html, pressed, disabled, onClick, cls = 'opt') {
+  const b = document.createElement('button'); b.className = cls; b.type = 'button';
+  b.setAttribute('aria-pressed', pressed); b.disabled = !!disabled; b.innerHTML = html; b.onclick = onClick; return b;
+}
+function fill(id, nodes) { const el = $(id); el.replaceChildren(...nodes); }
+
+function normalize() {
+  if (!CFG.skus.some(s => s.facer === st.facer && s.thk === st.thk)) st.thk = CFG.skus.find(s => s.facer === st.facer).thk;
+  if (!skuFor(st.facer, st.thk, st.pcs)) st.pcs = skuFor(st.facer, st.thk).pcs;
+}
+
+function convertQty(fromUnit, toUnit, c) {
+  const b = c.bundles;
+  return { bundles: b, boards: b * st.pcs, sf: b * st.pcs * c.sfBoard, trucks: Math.max(1, Math.ceil(b / c.perTruck)) }[toUnit];
+}
+
+/* ---- FM VSH zone lookup (APPROXIMATE) ----
+   3-digit ZIP prefixes roughly inside the Very Severe Hail area of FM Global Data Sheet 1-34
+   (2025 map: all or parts of MT, WY, CO, NM, TX, OK, NE, KS, SD, ND, MN, IA, MO, AR, LA, MS, TN, IL, WI).
+   FM publishes the zone as a map, not a ZIP list, so edge areas are a best estimate.
+   Replace with a county-level list traced from the FM map before launch. */
+const VSH_ZIP3 = (() => { const r = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+  return new Set([
+    ...r(660, 679),                     // Kansas (all)
+    ...r(730, 749),                     // Oklahoma (all)
+    ...r(680, 693),                     // Nebraska (all)
+    ...r(570, 577),                     // South Dakota (all)
+    ...r(750, 797),                     // Texas (most; excludes El Paso 798-799, 885)
+    ...r(800, 810),                     // Colorado: Front Range & eastern plains
+    820, 821, 822, 826, 827,            // Wyoming: eastern
+    ...r(880, 884),                     // New Mexico: eastern
+    ...r(590, 593),                     // Montana: eastern
+    ...r(580, 586),                     // North Dakota: south & east
+    560, 561, 562, 565, 566, 567,       // Minnesota: south & west
+    ...r(500, 516),                     // Iowa: west & central
+    ...r(640, 658),                     // Missouri: west & central
+    ...r(716, 729),                     // Arkansas
+    ...r(710, 714),                     // Louisiana: north
+    ...r(386, 393),                     // Mississippi: north & central
+    ...r(380, 385),                     // Tennessee: west & middle
+    612, 614, 615, 616, 617, 618, 625, 626, 627, 628, // Illinois: west & central
+    535, 538,                           // Wisconsin: southwest
+  ]); })();
+function vshZone() { if (!/^\d{5}$/.test(st.zip)) return null; return VSH_ZIP3.has(+st.zip.slice(0, 3)); }
+function renderZip() {
+  const el = $('zipRes'), v = vshZone();
+  if (v === null) { el.className = 'zipres'; el.innerHTML = ''; return; }
+  if (v) {
+    const ok = CFG.vsh[st.thk];
+    el.className = 'zipres on hot';
+    if (!ok && st.vshOverride) {
+      el.innerHTML = `<b>VSH recommended for ZIP ${st.zip}.</b> You've chosen to continue with a non-VSH ${frac(st.thk)} board.<button class="lnk" type="button" id="undoOv">Use VSH instead</button>`;
+      $('undoOv').onclick = () => set({ vshOverride: false, thk: 0.5, facer: st.facer === 'ff' ? 'pf' : st.facer }, 'board');
+      return;
+    }
+    el.innerHTML = `<b>ZIP ${st.zip} looks to be in an FM Very Severe Hail (VSH) region.</b> Hail larger than 2″ is expected here (15-year return period), so we recommend a VSH-rated 1/2″ ReCB EVERBOARD.` +
+      (ok ? `<div style="margin-top:8px;color:#1d6b3a;font-weight:600">✓ Your current selection is VSH rated.</div>`
+          : `<br><button class="act" type="button" id="useVsh">Switch to 1/2″ VSH board</button><button class="act2" type="button" id="keepSel">Keep my selection</button>`) +
+      `<div class="fine">Preliminary ZIP-level lookup. Confirm your exact site on FM's hail map (Data Sheet 1-34, 2025 update).</div>`;
+    const b = $('useVsh'); if (b) b.onclick = () => set({ thk: 0.5, facer: st.facer === 'ff' ? 'pf' : st.facer }, 'board');
+    const k = $('keepSel'); if (k) k.onclick = () => set({ vshOverride: true });
+  } else {
+    el.className = 'zipres on cool';
+    el.innerHTML = `<b>ZIP ${st.zip} appears to be outside FM's Very Severe Hail region.</b> Any ReCB EVERBOARD option fits. Choose 1/2″ if you want VSH-rated protection.<div class="fine">Preliminary ZIP-level lookup. Confirm your exact site on FM's hail map (Data Sheet 1-34).</div>`;
+  }
+}
+
+function ratings() { const f = CFG.facers[st.facer];
+  if (f.ulPending) return ['UL approval pending'];
+  const r = ['UL Approved']; if (f.fm) r.push('FM Approved'); if (CFG.vsh[st.thk]) r.push('VSH'); if (f.classA) r.push('Class A fire'); return r; }
+
+let lastScene = null;
+function render() {
+  normalize();
+  const c = calc();
+  if (st.truck >= c.trucks) st.truck = c.trucks - 1;
+
+  fill('optFacer', Object.entries(CFG.facers).map(([k, f]) =>
+    opt(`<span class="sw ${f.sw}"><i class="sw ${f.sw2}"></i></span><span><div class="t">${f.name}${f.classA && !f.ulPending ? '<span class="cla">Class A</span>' : ''}</div>${f.soon ? '<div class="tags"><span class="soon">'+CLOCK+'Coming soon</span><span class="pre">Accepting pre-orders</span></div>' : ''}<div class="s">${f.sub}</div></span>`,
+      st.facer === k, !CFG.skus.some(s => s.facer === k), () => set({ facer: k }, 'board'))));
+  fill('optThk', CFG.thicknesses.map(t => { const ok = CFG.skus.some(s => s.facer === st.facer && s.thk === t);
+    return opt(`<div class="t">${frac(t)}</div><div class="s">${ok ? (CFG.vsh[t] ? '<span class="vsh">VSH · Very Severe Hail</span>' + (vshZone() === true ? '<span class="rec">Recommended</span>' : '') : nf(4 * st.len * CFG.lbPerSf[t]) + ' lb / board') : 'Not offered in this facer'}</div>`,
+      st.thk === t, !ok, () => set({ thk: t }, 'board')); }));
+  $('optLen').style.setProperty('--n', CFG.lengths.length);
+  fill('optLen', CFG.lengths.map(l => opt(`<div class="t">${l.name}</div><div class="s">${4 * l.ft} sq ft</div>`, st.len === l.ft, false, () => set({ len: l.ft }, 'board'))));
+
+  fill('optBundle', CFG.skus.filter(s => s.facer === st.facer && s.thk === st.thk).sort((a, b) => b.pcs - a.pcs).map(s => {
+    const h = s.pcs * s.thk + CFG.dunnageIn, lb = s.pcs * 4 * st.len * CFG.lbPerSf[s.thk] + CFG.dunnageLb;
+    return opt(`<span><div class="t">${s.pcs} pieces <span class="s">· ${frac(s.thk)} boards</span></div><div class="s">${nf(s.pcs * 4 * st.len)} sq ft per pallet · ${CFG.brand} ${s.code}</div></span><span class="r">${h.toFixed(h % 1 ? 1 : 0)}″ tall<br>~${nf(lb)} lb</span>`,
+      st.pcs === s.pcs, false, () => set({ pcs: s.pcs }, 'bundle'));
+  }));
+
+  const units = [['bundles', 'Pallets'], ['boards', 'Boards'], ['sf', 'Sq ft'], ['trucks', 'Truckloads']];
+  fill('optUnit', units.map(([k, n]) => opt(n, st.unit === k, false, () => { const cc = calc(); st.qty = convertQty(st.unit, k, cc); st.unit = k; go('truck'); render(); }, '')));
+  if (document.activeElement !== $('qIn')) $('qIn').value = st.qty;
+
+  $('derived').innerHTML = `<b>${nf(c.bundles)}</b> pallet${c.bundles > 1 ? 's' : ''} · <b>${nf(c.boards)}</b> boards · <b>${nf(c.sf)}</b> sq ft<br>~${nf(c.lb)} lb · <b>${c.trucks}</b> flatbed${c.trucks > 1 ? 's' : ''} (up to ${c.perTruck} pallets per load)`;
+
+  fill('optShip', [['deliver', 'Delivered by flatbed', st.zip.length === 5 ? `Freight quoted to ZIP ${st.zip}` : 'Freight quoted to your jobsite (enter ZIP above)'], ['pickup', 'Will-call pickup', CFG.plant]].map(([k, t, sub]) =>
+    opt(`<span><div class="t">${t}</div><div class="s">${sub}</div></span>`, st.ship === k, false, () => set({ ship: k }, 'truck'))));
+  renderZip();
+
+  const f = CFG.facers[st.facer];
+  $('fSku').textContent = `${CFG.brand} ${c.sku.code} · ${f.name} · ${frac(st.thk)} · 4′×${st.len}′ · ${st.pcs}-pc pallets · ${ratings().join(' · ')}`;
+  $('fMain').textContent = CFG.pricePerSf ? '$' + nf(c.sf * CFG.pricePerSf) : `${nf(c.sf)} sq ft`;
+  $('cta').textContent = f.soon ? 'Pre-order' : 'Request quote';
+  $('fSub').textContent = CFG.pricePerSf ? `est. before freight · ${nf(c.sf)} sq ft` : `${f.soon ? 'Coming soon · accepting pre-orders · ' : ''}${c.bundles} pallets · ${c.trucks} truck${c.trucks > 1 ? 's' : ''} · pricing by quote`;
+
+  // stage
+  const titles = { board: 'Board', bundle: 'Pallet', truck: 'Truckload' };
+  const stats = {
+    board: `${f.soon ? 'Coming soon · Accepting pre-orders · ' : ''}${f.name} · ${frac(st.thk)} × 4′ × ${st.len}′ · ${c.sfBoard} sq ft · ~${nf(c.lbBoard)} lb · ${ratings().join(' · ')}`,
+    bundle: `${st.pcs} boards · ${nf(st.pcs * c.sfBoard)} sq ft · ${(c.bundleH).toFixed(c.bundleH % 1 ? 1 : 0)}″ tall · ~${nf(c.bundleLb)} lb`,
+    truck: (() => { const n = Math.min(c.perTruck, c.bundles - st.truck * c.perTruck);
+      return `${n} pallet${n > 1 ? 's' : ''} on this load · ~${nf(n * c.bundleLb)} lb · max ${c.perTruck}/load (${c.limit}-limited)`; })(),
+  };
+  $('sceneTitle').textContent = titles[st.scene];
+  $('sceneStats').textContent = stats[st.scene];
+  $('stageNote').textContent = st.scene === 'truck' ? `48′ flatbed, ${nf(CFG.truck.payloadLb)} lb payload, ${CFG.truck.stackIn / 12}′ max stack.` : '';
+  $('truckNav').style.display = st.scene === 'truck' && c.trucks > 1 ? 'flex' : 'none';
+  $('tLbl').textContent = `Truck ${st.truck + 1} of ${c.trucks}`;
+  $('tPrev').disabled = st.truck === 0; $('tNext').disabled = st.truck >= c.trucks - 1;
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.go === st.scene));
+
+  const svg = st.scene === 'board' ? drawBoardScene(c) : st.scene === 'bundle' ? drawBundleScene(c) : drawTruckScene(c);
+  const art = $('art');
+  if (lastScene !== st.scene && lastScene !== null) {
+    art.style.opacity = 0;
+    clearTimeout(render._t);
+    render._t = setTimeout(() => { art.innerHTML = svg; art.style.opacity = 1; }, 180);
+  } else { clearTimeout(render._t); art.innerHTML = svg; art.style.opacity = 1; }
+  lastScene = st.scene;
+}
+function set(patch, scene) { Object.assign(st, patch); if (scene) st.scene = scene; render(); }
+function go(scene) { st.scene = scene; }
+
+/* scroll → scene, like a configurator walkthrough */
+let lockUntil = 0;
+const io = new IntersectionObserver(es => {
+  if (Date.now() < lockUntil) return;
+  es.forEach(e => { if (e.isIntersecting && st.scene !== e.target.dataset.scene) { st.scene = e.target.dataset.scene; render(); } });
+}, { rootMargin: '-45% 0px -45% 0px' });
+document.querySelectorAll('.sec[data-scene]').forEach(el => io.observe(el));
+
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  st.scene = b.dataset.go; lockUntil = Date.now() + 900; render();
+  const target = { board: 'secBoard', bundle: 'secBundle', truck: 'secQty' }[b.dataset.go];
+  $(target).scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+$('tPrev').onclick = () => { st.truck--; render(); };
+$('tNext').onclick = () => { st.truck++; render(); };
+const step = () => ({ bundles: 1, boards: st.pcs, sf: st.pcs * 4 * st.len, trucks: 1 }[st.unit]);
+$('qMinus').onclick = () => set({ qty: Math.max(step(), (st.qty || 0) - step()) }, 'truck');
+$('qPlus').onclick = () => set({ qty: (st.qty || 0) + step() }, 'truck');
+$('qIn').oninput = e => { const v = parseInt(e.target.value.replace(/\D/g, ''), 10); st.qty = isNaN(v) ? 0 : v; st.scene = 'truck'; render(); };
+$('qIn').onblur = () => { if (!st.qty) st.qty = step(); render(); };
+$('zip').oninput = e => { e.target.value = e.target.value.replace(/\D/g, ''); if (e.target.value !== st.zip) st.vshOverride = false; st.zip = e.target.value; render(); };
+
+/* quote request (prototype: no backend yet) */
+function summary() {
+  const c = calc(), f = CFG.facers[st.facer];
+  return [`${f.soon ? 'PRE-ORDER (coming soon) — ' : ''}${CFG.brand} ${c.sku.code} — ${f.name}, ${frac(st.thk)}, 4′×${st.len}′`,
+    `Ratings: ${ratings().join(', ')}`,
+    `${c.bundles} pallets × ${st.pcs} pcs = ${nf(c.boards)} boards (${nf(c.sf)} sq ft)`,
+    `Est. weight ~${nf(c.lb)} lb · ${c.trucks} flatbed load${c.trucks > 1 ? 's' : ''}`,
+    st.ship === 'deliver' ? `Delivery to ZIP ${st.zip || '(not entered)'}` : `Will-call: ${CFG.plant}`,
+    ...(vshZone() === true && !CFG.vsh[st.thk] ? ['Note: jobsite ZIP is in an FM VSH region; customer chose a non-VSH board.'] : [])].join('\n');
+}
+/* Quote request (demonstration only: nothing is sent) */
+let stage = 'form';
+function openModal() {
+  stage = 'form';
+  $('mTitle').textContent = CFG.facers[st.facer].soon ? 'Pre-order' : 'Request a quote';
+  $('mIntro').textContent = "We'll confirm pricing, freight and lead time for this configuration.";
+  $('mFields').style.display = 'block';
+  $('mSubmit').style.display = ''; $('mSubmit').textContent = CFG.facers[st.facer].soon ? 'Submit pre-order' : 'Submit request';
+  $('mClose').textContent = 'Cancel'; $('mSummary').textContent = summary(); $('modal').classList.add('on');
+}
+$('cta').onclick = openModal;
+$('mClose').onclick = () => $('modal').classList.remove('on');
+$('modal').onclick = e => { if (e.target.id === 'modal') $('modal').classList.remove('on'); };
+$('mForm').onsubmit = e => {
+  e.preventDefault();
+  if (stage === 'done') {
+    navigator.clipboard.writeText($('mSummary').textContent).then(() => $('mSubmit').textContent = 'Copied', () => $('mSubmit').textContent = 'Select text to copy');
+    return;
+  }
+  const f = CFG.facers[st.facer], first = $('fFirst').value.trim(), last = $('fLast').value.trim(), phone = $('fPhone').value.trim(), email = $('fEmail').value.trim();
+  stage = 'done';
+  $('mTitle').textContent = f.soon ? 'Pre-order summary' : 'Quote request summary';
+  $('mIntro').textContent = `Thanks, ${first}. Here's your request. (Demo: nothing was sent.)`;
+  $('mFields').style.display = 'none';
+  $('mSummary').textContent = `${first} ${last}\n${phone} · ${email}\n\n` + summary();
+  $('mSubmit').textContent = 'Copy summary'; $('mClose').textContent = 'Done';
+};
+document.querySelectorAll('.mslot').forEach(el => { const src = CFG.marks[el.dataset.mark]; if (src) { el.innerHTML = `<img alt="${el.dataset.mark.toUpperCase()} mark" src="${src}">`; el.classList.add('has'); } });
+render();
+</script>
+</body>
+</html>
